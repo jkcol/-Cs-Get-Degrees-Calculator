@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Secrets and local config (never commit tracked examples)
+**/.env
+!**/.env.example
+
+# Local Cloud SQL Auth Proxy binary (large; download per README)
+tools/cloud-sql-proxy.exe
+
+# Builds and caches
+dist/
+build/
+*.tsbuildinfo
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
