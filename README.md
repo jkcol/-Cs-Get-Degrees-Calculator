@@ -44,8 +44,6 @@ Your API connects with a **built-in** MySQL user (username + password), **not** 
    FLUSH PRIVILEGES;
    ```
 
-More detail and SQL-only user creation: [`team110-api/README.md`](./team110-api/README.md).
-
 ## One-time: Cloud SQL Auth Proxy (local dev)
 
 From the **repo root**, you can download the Windows x64 v2 proxy (adjust version if needed):
@@ -132,11 +130,11 @@ Open [http://localhost:3000](http://localhost:3000). With `VITE_API_BASE_URL` em
 | `Access denied ... (using password: YES)` | User missing in Cloud SQL, wrong password in `.env`, or missing `GRANT` / wrong host (`'%'`) |
 | `EADDRINUSE` on port 8080 | Another `node` / old API still running — stop it or change `PORT` in `.env` |
 | `HTTP 500` on the UI for courses | Open `/api/courses` directly; read the JSON `detail` field for the MySQL error |
-| Course titles show as "Unknown course" | Your `Courses` column names may differ from what `mapCourseRow.mjs` expects — run `DESCRIBE Courses;` and adjust `COURSES_SQL` in `.env` or the mapper (see `team110-api/README.md`) |
+| Course titles show as "Unknown course" | Your `Courses` column names may differ from what `mapCourseRow.mjs` expects — run `DESCRIBE Courses;` and adjust `COURSES_SQL` in `.env` or the mapper |
 
 ## Production (optional)
 
-Deploy `team110-api` to **Cloud Run** with the Cloud SQL connection and env vars; set the service URL in `Courseloadplannerui` as `VITE_API_BASE_URL` for production builds. See [`team110-api/README.md`](./team110-api/README.md) § Deploy to Cloud Run.
+Deploy `team110-api` to **Cloud Run** with the Cloud SQL connection and env vars; set the service URL in `Courseloadplannerui` as `VITE_API_BASE_URL` for production builds.
 
 ## Team
 

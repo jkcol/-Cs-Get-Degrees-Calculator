@@ -2,15 +2,35 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
-import { mapCourseRow } from './mapCourseRow.mjs';
+import { mapCourseCatalogRow, mapSectionRow } from './mapCourseRow.mjs';
 
 const PORT = Number(process.env.PORT ?? 8080);
 const DB_NAME = process.env.DB_NAME ?? 'team110_db';
 
-/** Override with your real JOIN if needed (run DESCRIBE Courses; in mysql). */
 const COURSES_SQL =
   process.env.COURSES_SQL?.replace(/\\n/g, '\n') ??
-  `SELECT * FROM Courses LIMIT 500`;
+  `SELECT CourseID, CourseName FROM Courses ORDER BY CourseID`;
+
+const SECTIONS_FOR_COURSE_SQL = `
+SELECT
+  s.CRN,
+  s.CourseID,
+  c.CourseName,
+  s.CreditHours,
+  s.AvgGPA,
+  s.IsExcellent,
+  s.YearTerm,
+  s.StartTime,
+  s.EndTime,
+  s.DaysOfWeek,
+  s.TypeCode,
+  i.InstructorName
+FROM Sections s
+JOIN Courses c ON s.CourseID = c.CourseID
+JOIN Instructors i ON s.InstructorID = i.InstructorID
+WHERE s.CourseID = ?
+ORDER BY s.YearTerm DESC, s.AvgGPA DESC, s.CRN ASC
+`.trim();
 
 function createPoolConfig() {
   const connName = process.env.CLOUD_SQL_CONNECTION_NAME;
@@ -20,7 +40,6 @@ function createPoolConfig() {
     database: DB_NAME,
     waitForConnections: true,
     connectionLimit: 5,
-    // Cloud SQL / some MySQL auth plugins request mysql_clear_password; safe via Auth Proxy or TLS.
     enableCleartextPlugin: true,
   };
   if (connName) {
@@ -50,13 +69,31 @@ app.get('/api/courses', async (_req, res) => {
   try {
     if (!pool) pool = mysql.createPool(createPoolConfig());
     const [rows] = await pool.query(COURSES_SQL);
-    const courses = (Array.isArray(rows) ? rows : []).map(mapCourseRow);
+    const courses = (Array.isArray(rows) ? rows : []).map(mapCourseCatalogRow);
     res.json(courses);
   } catch (err) {
     console.error(err);
     res.status(500).json({
       error: 'Database query failed',
-      hint: 'Run DESCRIBE Courses; and set COURSES_SQL or fix column names in mapCourseRow.mjs',
+      detail: String(err.message),
+    });
+  }
+});
+
+app.get('/api/courses/:courseId/sections', async (req, res) => {
+  const courseId = req.params.courseId;
+  if (!courseId || !/^[A-Za-z0-9&]+$/.test(courseId)) {
+    return res.status(400).json({ error: 'Invalid CourseID' });
+  }
+  try {
+    if (!pool) pool = mysql.createPool(createPoolConfig());
+    const [rows] = await pool.query(SECTIONS_FOR_COURSE_SQL, [courseId]);
+    const sections = (Array.isArray(rows) ? rows : []).map(mapSectionRow);
+    res.json(sections);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: 'Database query failed',
       detail: String(err.message),
     });
   }
