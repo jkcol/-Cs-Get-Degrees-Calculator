@@ -6,13 +6,6 @@ export function formatCourseCode(courseId) {
   return s.toUpperCase();
 }
 
-function pick(row, ...keys) {
-  for (const k of keys) {
-    if (row[k] !== undefined && row[k] !== null) return row[k];
-  }
-  return undefined;
-}
-
 export function parseIsExcellent(v) {
   if (v === true || v === 1) return true;
   if (v === false || v === 0) return false;
@@ -22,8 +15,8 @@ export function parseIsExcellent(v) {
 }
 
 export function mapCourseCatalogRow(row) {
-  const courseId = pick(row, 'CourseID', 'courseid');
-  const nameRaw = pick(row, 'CourseName', 'coursename');
+  const courseId = row.CourseID;
+  const nameRaw = row.CourseName;
   const name = nameRaw != null ? String(nameRaw).trim() : '';
   return {
     id: String(courseId ?? ''),
@@ -46,10 +39,10 @@ function formatTime(t) {
 }
 
 function buildScheduleLabel(row) {
-  const days = pick(row, 'DaysOfWeek', 'daysofweek');
-  const start = pick(row, 'StartTime', 'starttime');
-  const end = pick(row, 'EndTime', 'endtime');
-  const typeCode = pick(row, 'TypeCode', 'typecode');
+  const days = row.DaysOfWeek;
+  const start = row.StartTime;
+  const end = row.EndTime;
+  const typeCode = row.TypeCode;
   const bits = [];
   if (days != null && String(days).trim() !== '') bits.push(String(days).trim());
   const st = formatTime(start);
@@ -60,29 +53,27 @@ function buildScheduleLabel(row) {
 }
 
 export function mapSectionRow(row) {
-  const courseId = pick(row, 'CourseID', 'courseid');
-  const crnRaw = pick(row, 'CRN', 'crn');
-  const crn = Number(crnRaw);
+  const courseId = row.CourseID;
+  const crn = Number(row.CRN);
   const id = `${courseId}-${crn}`;
 
-  const courseName = pick(row, 'CourseName', 'coursename');
+  const courseName = row.CourseName;
   const name = courseName != null ? String(courseName).trim() : '';
 
-  const ch = pick(row, 'CreditHours', 'credithours');
+  const ch = row.CreditHours;
   const credits = ch != null && ch !== '' ? Number(ch) : NaN;
 
-  const ag = pick(row, 'AvgGPA', 'avggpa');
+  const ag = row.AvgGPA;
   const avgGpa = ag != null && ag !== '' ? Number(ag) : null;
   const avgGpaOut = avgGpa != null && !Number.isNaN(avgGpa) ? avgGpa : null;
 
-  const instructorRaw = pick(row, 'InstructorName', 'instructorname');
+  const instructorRaw = row.InstructorName;
   const instructor =
     instructorRaw != null && String(instructorRaw).trim() !== '' ? String(instructorRaw).trim() : '';
 
-  const ex = pick(row, 'IsExcellent', 'isExcellent', 'isexcellent');
-  const isExcellent = parseIsExcellent(ex);
+  const isExcellent = parseIsExcellent(row.IsExcellent);
 
-  const yt = pick(row, 'YearTerm', 'yearterm');
+  const yt = row.YearTerm;
   const yearTerm = yt != null && String(yt).trim() !== '' ? String(yt).trim() : null;
 
   return {
