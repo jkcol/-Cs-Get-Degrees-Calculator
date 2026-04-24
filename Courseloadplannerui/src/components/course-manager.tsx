@@ -4,7 +4,7 @@ import type { CourseCatalogItem } from '../types/course';
 
 interface CourseManagerProps {
     apiBase: string;
-    onCatalogChange: () => void; // called after create/update/delete so parent re-fetches catalog
+    onCatalogChange: () => void;
 }
 
 type Mode = 'search' | 'create' | 'edit';
@@ -13,12 +13,10 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
     const [isOpen, setIsOpen] = useState(false);
     const [mode, setMode] = useState<Mode>('search');
 
-    // Search state
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<CourseCatalogItem[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
-    // Form state (create / edit)
     const [formId, setFormId] = useState('');
     const [formName, setFormName] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -26,7 +24,6 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
     const [formError, setFormError] = useState<string | null>(null);
     const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-    // ── Search ──────────────────────────────────────────────────────────────────
     const runSearch = useCallback(async (q: string) => {
         if (!q.trim()) { setResults([]); return; }
         setSearchLoading(true);
@@ -46,7 +43,6 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
         return () => clearTimeout(t);
     }, [query, runSearch]);
 
-    // ── Create ──────────────────────────────────────────────────────────────────
     const handleCreate = async () => {
         if (!formId.trim() || !formName.trim()) {
             setFormError('Both Course ID and Course Name are required.');
@@ -74,7 +70,6 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
         }
     };
 
-    // ── Edit ────────────────────────────────────────────────────────────────────
     const openEdit = (course: CourseCatalogItem) => {
         setEditingId(course.id);
         setFormName(course.name);
@@ -107,7 +102,6 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
         }
     };
 
-    // ── Delete ──────────────────────────────────────────────────────────────────
     const handleDelete = async (course: CourseCatalogItem) => {
         if (!window.confirm(`Delete "${course.code} – ${course.name}"? This cannot be undone.`)) return;
         try {
@@ -123,7 +117,6 @@ export function CourseManager({ apiBase, onCatalogChange }: CourseManagerProps) 
         }
     };
 
-    // ── Reset & close ───────────────────────────────────────────────────────────
     const reset = () => {
         setMode('search');
         setQuery('');
