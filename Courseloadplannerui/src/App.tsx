@@ -8,6 +8,8 @@ import { CourseSearch } from './components/course-search';
 import { OnboardingForm } from './components/onboarding-form';
 import { DegreeProgress } from './components/degree-progress';
 import type { Course, CourseCatalogItem } from './types/course';
+import { CourseManager } from './components/course-manager';
+
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
@@ -110,14 +112,14 @@ export default function App() {
             <h1 className="text-xl font-bold tracking-tight">The "C's Get Degrees" <span className="text-[#FF5F05]">Calculator</span></h1>
           </div>
           <div className="flex items-center gap-4 sm:gap-8 text-sm font-medium">
-            <button 
+            <button
               onClick={() => setActiveTab('planner')}
               className={`flex items-center gap-2 hover:text-[#FF5F05] transition-colors ${activeTab === 'planner' ? 'text-[#FF5F05]' : ''}`}
             >
               <LayoutDashboard size={16} />
               Planner
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('requirements')}
               className={`flex items-center gap-2 hover:text-[#FF5F05] transition-colors ${activeTab === 'requirements' ? 'text-[#FF5F05]' : ''}`}
             >
@@ -153,6 +155,14 @@ export default function App() {
                     catalog={catalog}
                     apiBase={API_BASE}
                   />
+                  <CourseManager
+                    apiBase={API_BASE}
+                    onCatalogChange={() => {
+                      fetch(`${API_BASE}/api/courses`)
+                        .then(r => r.json())
+                        .then(data => setCatalog(Array.isArray(data) ? data : []));
+                    }}
+                  />
                 </div>
 
                 <div className="space-y-4">
@@ -167,10 +177,10 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedCourses.map(course => (
-                        <CourseCard 
-                          key={course.id} 
-                          course={course} 
-                          onRemove={() => removeCourse(course.id)} 
+                        <CourseCard
+                          key={course.id}
+                          course={course}
+                          onRemove={() => removeCourse(course.id)}
                         />
                       ))}
                     </div>
@@ -183,10 +193,10 @@ export default function App() {
                   <PieChart className="text-[#FF5F05]" size={20} />
                   <h2 className="text-xl font-bold text-slate-800">Visual Stress Gauge</h2>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                   <DifficultyMeter score={difficultyScore} />
-                  
+
                   <div className="space-y-6 pt-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -196,8 +206,8 @@ export default function App() {
                           <span className="text-xs text-slate-400">/ 18</span>
                         </div>
                         <div className="w-full bg-slate-200 h-1.5 mt-2 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full transition-all duration-500 ${totalCredits > 18 ? 'bg-red-500' : 'bg-[#FF5F05]'}`} 
+                          <div
+                            className={`h-full transition-all duration-500 ${totalCredits > 18 ? 'bg-red-500' : 'bg-[#FF5F05]'}`}
                             style={{ width: `${Math.min(100, (totalCredits / 18) * 100)}%` }}
                           ></div>
                         </div>
@@ -224,9 +234,9 @@ export default function App() {
                           </h4>
                           <p className={`text-xs mt-1 leading-relaxed ${difficultyScore > 70 ? 'text-red-800' : 'text-blue-800'}`}>
                             {difficultyScore === 0 ? "Add your planned courses to generate a personalized workload strategy." :
-                             difficultyScore < 40 ? `Hey ${studentInfo.name.split(' ')[0]}, this looks like a breezy semester. Excellent for focus on your ${studentInfo.interests[0]} interest!` :
-                             difficultyScore < 70 ? "This is a standard balanced load. You should have enough time for RSOs and social life." :
-                             "Warning: This combination has a high attrition rate. Consider swapping one technical course for a Gen-Ed."}
+                              difficultyScore < 40 ? `Hey ${studentInfo.name.split(' ')[0]}, this looks like a breezy semester. Excellent for focus on your ${studentInfo.interests[0]} interest!` :
+                                difficultyScore < 70 ? "This is a standard balanced load. You should have enough time for RSOs and social life." :
+                                  "Warning: This combination has a high attrition rate. Consider swapping one technical course for a Gen-Ed."}
                           </p>
                         </div>
                       </div>
@@ -244,7 +254,7 @@ export default function App() {
                       <User size={18} className="text-[#FF5F05]" />
                       Profile
                     </h3>
-                    <button 
+                    <button
                       onClick={() => setHasOnboarded(false)}
                       className="p-1 hover:bg-white/10 rounded-md transition-colors"
                     >
