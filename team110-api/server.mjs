@@ -43,10 +43,7 @@ function createPoolConfig() {
     enableCleartextPlugin: true,
   };
   if (connName) {
-    return {
-      ...base,
-      socketPath: `/cloudsql/${connName}`,
-    };
+    return { ...base, socketPath: `/cloudsql/${connName}` };
   }
   return {
     ...base,
@@ -60,6 +57,10 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 let pool;
+function getPool() {
+  if (!pool) pool = mysql.createPool(createPoolConfig());
+  return pool;
+}
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
@@ -67,16 +68,104 @@ app.get('/health', (_req, res) => {
 
 app.get('/api/courses', async (_req, res) => {
   try {
-    if (!pool) pool = mysql.createPool(createPoolConfig());
-    const [rows] = await pool.query(COURSES_SQL);
+    const [rows] = await getPool().query(COURSES_SQL);
     const courses = (Array.isArray(rows) ? rows : []).map(mapCourseCatalogRow);
     res.json(courses);
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      error: 'Database query failed',
-      detail: String(err.message),
-    });
+    res.status(500).json({ error: 'Database query failed', detail: String(err.message) });
+  }
+});
+
+app.get('/api/courses/search', async (req, res) => {
+  const q = String(req.query.q ?? '').trim();
+  if (!q) return res.json([]);
+  try {
+    const like = `%${q}%`;
+    const [rows] = await getPool().query(
+      `SELECT CourseID, CourseName FROM Courses
+       WHERE CourseName LIKE ? OR CourseID LIKE ?
+       ORDER BY CourseID
+       LIMIT 50`,
+      [like, like]
+    );
+    res.json((Array.isArray(rows) ? rows : []).map(mapCourseCatalogRow));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Search failed', detail: String(err.message) });
+  }
+});
+
+app.post('/api/courses', async (req, res) => {
+  const { courseId, courseName } = req.body ?? {};
+  if (!courseId || !courseName) {
+    return res.status(400).json({ error: 'courseId and courseName are required' });
+  }
+  try {
+    await getPool().query(
+      `INSERT INTO Courses (CourseID, CourseName) VALUES (?, ?)`,
+      [String(courseId).trim().toUpperCase(), String(courseName).trim()]
+    );
+    res.status(201).json({ ok: true, courseId });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'A course with that ID already exists' });
+    }
+    res.status(500).json({ error: 'Insert failed', detail: String(err.message) });
+  }
+});
+
+app.get('/api/courses/:courseId', async (req, res) => {
+  const courseId = req.params.courseId;
+  try {
+    const [rows] = await getPool().query(
+      `SELECT CourseID, CourseName FROM Courses WHERE CourseID = ? LIMIT 1`,
+      [courseId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Course not found' });
+    res.json(mapCourseCatalogRow(rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database query failed', detail: String(err.message) });
+  }
+});
+
+app.put('/api/courses/:courseId', async (req, res) => {
+  const courseId = req.params.courseId;
+  const { courseName } = req.body ?? {};
+  if (!courseName) {
+    return res.status(400).json({ error: 'courseName is required' });
+  }
+  try {
+    const [result] = await getPool().query(
+      `UPDATE Courses SET CourseName = ? WHERE CourseID = ?`,
+      [String(courseName).trim(), courseId]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    res.json({ ok: true, courseId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Update failed', detail: String(err.message) });
+  }
+});
+
+app.delete('/api/courses/:courseId', async (req, res) => {
+  const courseId = req.params.courseId;
+  try {
+    const [result] = await getPool().query(
+      `DELETE FROM Courses WHERE CourseID = ?`,
+      [courseId]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    res.json({ ok: true, courseId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Delete failed', detail: String(err.message) });
   }
 });
 
@@ -86,16 +175,12 @@ app.get('/api/courses/:courseId/sections', async (req, res) => {
     return res.status(400).json({ error: 'Invalid CourseID' });
   }
   try {
-    if (!pool) pool = mysql.createPool(createPoolConfig());
-    const [rows] = await pool.query(SECTIONS_FOR_COURSE_SQL, [courseId]);
+    const [rows] = await getPool().query(SECTIONS_FOR_COURSE_SQL, [courseId]);
     const sections = (Array.isArray(rows) ? rows : []).map(mapSectionRow);
     res.json(sections);
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      error: 'Database query failed',
-      detail: String(err.message),
-    });
+    res.status(500).json({ error: 'Database query failed', detail: String(err.message) });
   }
 });
 
