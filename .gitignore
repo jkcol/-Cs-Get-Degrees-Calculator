@@ -18,3 +18,16 @@ build/
 .DS_Store
 Thumbs.db
 *.log
+
+# Secrets — never commit real env files
+.env
+.env.save
+.env.local
+*.env.save
+
+# Vendored binaries
+tools/cloud-sql-proxy
+Courseloadplannerui/tools/cloud-sql-proxy
+
+# OS
+.DS_Store
