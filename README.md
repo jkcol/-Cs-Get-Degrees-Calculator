@@ -1,8 +1,31 @@
 # The "C's Get Degrees" Calculator
 
-Course Load Planner for UIUC students: plan a semester, see a difficulty-style meter, and load the live course catalog from **Google Cloud SQL (MySQL)** via a small **Node.js** API.
+Course Load Planner for UIUC students: plan a semester, see a difficulty-style meter, and load the live course catalog from **Google Cloud SQL (MySQL)** via a **Node.js / Express** REST API.
 
-**Repository:** [github.com/jkcol/-Cs-Get-Degrees-Calculator](https://github.com/jkcol/-Cs-Get-Degrees-Calculator)
+**Repository:** [github.com/jkcol/course-load-planner](https://github.com/jkcol/course-load-planner)
+
+## Stack
+
+**Frontend:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+**Backend:** Node.js, Express, REST API, `mysql2` connection pooling
+**Database:** MySQL on Google Cloud SQL, accessed through the Cloud SQL Auth Proxy
+**Infrastructure:** Docker, Google Cloud Run
+
+The API exposes full CRUD over `/api/courses` (list, search, create, read, update, delete)
+plus `/api/courses/:courseId/sections`, backed by parameterized SQL queries with joins
+across the `Courses` and `Sections` tables.
+
+## Team and contributions
+
+Built as a **team project** (team 110) for coursework at UIUC. My contribution was the
+**database layer** — schema, queries, and the Express API that serves them — along with
+**frontend** work on the planner UI.
+
+The UI was scaffolded from a [Figma Make](https://www.figma.com/make/) export and uses
+component primitives from [shadcn/ui](https://ui.shadcn.com/) under the MIT license; see
+`Courseloadplannerui/src/Attributions.md`. Feature components (course search, course
+manager, degree progress, difficulty meter, recommendations) were built on top of that
+scaffold.
 
 ## Repository layout
 
